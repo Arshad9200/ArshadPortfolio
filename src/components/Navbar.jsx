@@ -1,17 +1,19 @@
 // ============================================================
 // src/components/Navbar.jsx — NAVIGATION BAR
 // ============================================================
-// Props = "properties" = data passed FROM parent TO child component.
-// Like function parameters, but for components.
-// <Navbar title="AA" /> — "title" is a prop.
+// LOGO REDESIGN: replaced the old <A/> SVG bracket logo with a
+// cleaner monogram-style mark.
 //
-// Here Navbar receives no props — it uses imported data directly.
+// New design concept: "AA" stacked initials in a minimal square badge —
+// inspired by how top-tier dev portfolios (Brittany Chiang, Josh Comeau)
+// use a tight, geometric lettermark that reads instantly at small sizes.
+//
+// On hover: slides in full name + title, same as before.
 
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-scroll"; // Smooth scroll to sections
+import { Link } from "react-scroll";
 
-// CSS-in-JS styles object
 const styles = {
   nav: {
     position: "fixed",
@@ -24,13 +26,6 @@ const styles = {
     justifyContent: "space-between",
     padding: "20px 48px",
     transition: "background 0.3s ease",
-  },
-  logo: {
-    fontFamily: "var(--font-display)",
-    fontSize: 28,
-    letterSpacing: 4,
-    color: "var(--accent)",
-    filter: "drop-shadow(0 0 20px rgba(59,255,160,0.4))",
   },
   links: {
     display: "flex",
@@ -48,9 +43,11 @@ const styles = {
   },
 };
 
-// ── LOGO MARK COMPONENT ──
-// Clean wordmark: stylised slash mark + name reveal on hover
-// Reference: how Vercel, Framer, Linear do minimal but memorable logos
+// ── REDESIGNED LOGO MARK ──
+// Clean "AA" monogram: two overlapping A-strokes forming a compact geometric badge.
+// A thin accent-colored square border anchors it — no rounded corners,
+// keeping it sharp and code-editor-like.
+// On hover: slides in "Arshad Ali / Software Engineer" exactly as before.
 function LogoMark() {
   const [hovered, setHovered] = useState(false);
 
@@ -61,55 +58,60 @@ function LogoMark() {
           from { opacity: 0; transform: translateX(-6px); }
           to   { opacity: 1; transform: translateX(0px); }
         }
+        @keyframes logoGlow {
+          0%,100% { filter: drop-shadow(0 0 6px rgba(59,255,160,0.25)); }
+          50%      { filter: drop-shadow(0 0 14px rgba(59,255,160,0.55)); }
+        }
       `}</style>
 
       <div
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 0,
-          cursor: "pointer",
-        }}
+        style={{ display: "flex", alignItems: "center", gap: 0, cursor: "pointer" }}
       >
-
-        {/* ── LOGO: Clean <A/> — single letter, code brackets, no border box ── */}
+        {/* ── MONOGRAM BADGE ── */}
         <svg
-          width="52"
-          height="36"
-          viewBox="0 0 52 36"
+          width="44"
+          height="44"
+          viewBox="0 0 44 44"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
+          style={{
+            animation: "logoGlow 3s ease-in-out infinite",
+            transition: "transform 0.3s ease",
+            transform: hovered ? "scale(1.08)" : "scale(1)",
+          }}
         >
-          {/* < bracket */}
-          <path
-            d="M6 10 L1 18 L6 26"
-            stroke="rgba(59,255,160,0.4)"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+          {/* Outer square border — accent-tinted */}
+          <rect
+            x="1.5"
+            y="1.5"
+            width="41"
+            height="41"
+            rx="4"
+            stroke="var(--accent)"
+            strokeWidth="1.2"
+            strokeOpacity={hovered ? 0.9 : 0.45}
+            style={{ transition: "stroke-opacity 0.3s" }}
           />
 
-          {/* Bold A — left leg */}
-          <path d="M18 28 L26 8" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
-          {/* Bold A — right leg */}
-          <path d="M26 8 L34 28" stroke="var(--accent)" strokeWidth="2.6" strokeLinecap="round" />
-          {/* Bold A — crossbar */}
-          <path d="M20.5 22 L31.5 22" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" />
+          {/* Inner corner accent marks — top-left & bottom-right */}
+          <path d="M1.5 10 L1.5 1.5 L10 1.5"   stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeOpacity="0.9" />
+          <path d="M34 42.5 L42.5 42.5 L42.5 34" stroke="var(--accent)" strokeWidth="2.2" strokeLinecap="round" strokeOpacity="0.9" />
 
-          {/* /> bracket */}
-          <path
-            d="M46 10 L51 18 L46 26"
-            stroke="rgba(59,255,160,0.4)"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          {/* First A — left, slightly offset */}
+          <path d="M9 32 L16.5 12" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M16.5 12 L24 32" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M11.2 26 L21.8 26" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
 
-          {/* Dot — appears on hover, accent on the peak */}
+          {/* Second A — right, overlapping, slightly lighter so they layer nicely */}
+          <path d="M20 32 L27.5 12" stroke="rgba(59,255,160,0.55)" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M27.5 12 L35 32" stroke="rgba(59,255,160,0.55)" strokeWidth="2.4" strokeLinecap="round" />
+          <path d="M22.2 26 L32.8 26" stroke="rgba(59,255,160,0.55)" strokeWidth="2" strokeLinecap="round" />
+
+          {/* Tiny dot at apex of first A — appears on hover */}
           {hovered && (
-            <circle cx="26" cy="7.5" r="2.2" fill="var(--accent)" />
+            <circle cx="16.5" cy="11" r="2" fill="var(--accent)" />
           )}
         </svg>
 
@@ -128,7 +130,6 @@ function LogoMark() {
             gap: 10,
             animation: hovered ? "fadeSlideIn 0.3s ease both" : "none",
           }}>
-
             {/* Thin vertical divider */}
             <div style={{
               width: 1,
@@ -162,45 +163,35 @@ function LogoMark() {
             </div>
           </div>
         </div>
-
       </div>
     </>
   );
 }
 
-// Array of nav items — easy to add/remove items here
 const navItems = [
-  { label: "Skills", to: "skills" },
-  { label: "Experience", to: "experience" },
-  { label: "Projects", to: "projects" },
-  { label: "Contact", to: "contact" },
+  { label: "Skills",      to: "skills"     },
+  { label: "Experience",  to: "experience" },
+  { label: "Projects",    to: "projects"   },
+  { label: "Contact",     to: "contact"    },
 ];
 
 function Navbar() {
-  // useState: [currentValue, functionToUpdateValue]
-  // scrolled = false initially, changes when user scrolls
-  const [scrolled, setScrolled] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState(null); // Track which link is hovered
+  const [scrolled, setScrolled]       = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // If user scrolled more than 50px, set scrolled to true
-      setScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll); // cleanup
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    // motion.nav — framer-motion animated nav element
-    // initial = starting state, animate = end state
     <motion.nav
-      initial={{ y: -100, opacity: 0 }} // Start above screen
-      animate={{ y: 0, opacity: 1 }} // Slide down to position
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
       style={{
         ...styles.nav,
-        // Conditional styling — add blur background when scrolled
         background: scrolled
           ? "rgba(3,7,18,0.85)"
           : "linear-gradient(to bottom, rgba(3,7,18,0.8), transparent)",
@@ -208,23 +199,18 @@ function Navbar() {
         borderBottom: scrolled ? "1px solid var(--border)" : "none",
       }}
     >
-      {/* ── LOGO ── */}
       <LogoMark />
 
       <div style={styles.links}>
-        {/* .map() loops over navItems array and creates a Link for each */}
         {navItems.map((item) => (
-          // KEY PROP: React needs unique "key" when rendering lists
-          // It helps React track which item changed/added/removed
           <Link
             key={item.to}
-            to={item.to} // ID of the section to scroll to
-            smooth={true} // Smooth scrolling animation
-            duration={600} // 600ms scroll animation
-            offset={-80} // Account for fixed navbar height
+            to={item.to}
+            smooth={true}
+            duration={600}
+            offset={-80}
             style={{
               ...styles.link,
-              // Ternary operator: condition ? valueIfTrue : valueIfFalse
               color: hoveredItem === item.to ? "var(--accent)" : "var(--muted)",
             }}
             onMouseEnter={() => setHoveredItem(item.to)}

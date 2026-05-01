@@ -1,10 +1,9 @@
 // ============================================================
 // src/components/Contact.jsx — CONTACT SECTION
 // ============================================================
-// Demonstrates:
-// - "href" for tel: and mailto: (native mobile/desktop behavior)
-// - On mobile: tel: opens the dialer, mailto: opens the email app
-// - Download trigger via JavaScript Blob API
+// FIX: Resume download now fetches the real PDF from /public folder
+// instead of generating a plain-text blob.
+// Make sure: public/Arshad_Ali_Resume.pdf exists in your project.
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -12,46 +11,17 @@ import { useInView } from "react-intersection-observer";
 import { personalInfo } from "../data/portfolioData";
 import { SectionTitle } from "./Skills";
 
+// ── FIXED: Download the actual PDF stored in /public ──
+// The file must be at: public/Arshad_Ali_Resume.pdf
+// React serves the public/ folder at the root URL automatically.
 const downloadResume = (e) => {
   e.preventDefault();
-  const content = `ARSHAD ALI — SOFTWARE ENGINEER
-Phone: ${personalInfo.phone}
-Email: ${personalInfo.email}
-
-${personalInfo.summary}
-
-EXPERIENCE
-Software Engineer | Atom Build (Feb 2025 – Mar 2026)
-• Designed REST APIs with Python (Sanic)
-• PostgreSQL, AWS S3, Apache Iceberg data processing
-• Root cause analysis and production bug fixes
-• React frontend + backend API integration
-
-PROJECTS
-1. Atom Hub – Data Platform & Job Orchestration
-   Stack: Python, Sanic, PostgreSQL, React, JavaScript
-
-2. Broadcast India – Live Streaming Analytics
-   Stack: Python, Sanic, PostgreSQL, React, JavaScript
-
-SKILLS
-Python | Sanic | REST APIs | React.js | Redux Toolkit
-PostgreSQL | MySQL | AWS S3 | Apache Iceberg
-Postman | Git | GitHub | Tailwind CSS | HTML5/CSS3
-
-EDUCATION
-B.Tech Computer Science
-Babu Banarasi Das University | 2020-2024 | 85.35%`;
-
-  const blob = new Blob([content], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "Arshad_Ali_Resume.txt";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const link = document.createElement("a");
+  link.href = "/Arshad_Ali_Resume.pdf";       // ← must match filename in /public
+  link.download = "Arshad_Ali_Resume.pdf";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 };
 
 // Contact cards data — each has different colors
@@ -83,9 +53,9 @@ const contactCards = [
   {
     icon: "📄",
     label: "Resume",
-    value: "Softwarwe Developer CV",
+    value: "Software Developer CV",           // ← fixed typo "Softwarwe"
     action: "Download PDF →",
-    href: "#",
+    href: "/Arshad_Ali_Resume.pdf",           // ← real href for right-click → Save As
     accentColor: "var(--accent)",
     glowColor: "rgba(59,255,160,0.2)",
     borderHover: "rgba(59,255,160,0.4)",
