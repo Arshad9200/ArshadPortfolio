@@ -111,7 +111,18 @@ function HeroCanvas() {
 
     draw();
 
-    return () => cancelAnimationFrame(animId); // Stop on unmount
+    // Same rationale as ParticleBackground — no point spending CPU
+    // animating a globe nobody can currently see.
+    const handleVisibility = () => {
+      if (document.hidden) cancelAnimationFrame(animId);
+      else draw();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      cancelAnimationFrame(animId); // Stop on unmount
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, []);
 
   return (

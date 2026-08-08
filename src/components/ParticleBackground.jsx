@@ -25,9 +25,13 @@ function ParticleBackground() {
     resize();
     window.addEventListener("resize", resize);
 
-    // Create 80 particles with random positions and velocities
-    // Array.from({ length: 80 }, ...) creates an array of 80 items
-    const particles = Array.from({ length: 80 }, () => ({
+    // Fewer particles on small screens — same visual density, less CPU work
+    // on devices that are more likely to be battery/perf constrained.
+    const particleCount = window.innerWidth < 768 ? 40 : 80;
+
+    // Create particles with random positions and velocities
+    // Array.from({ length: N }, ...) creates an array of N items
+    const particles = Array.from({ length: particleCount }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
       vx: (Math.random() - 0.5) * 0.4, // velocity x (-0.2 to +0.2)
@@ -88,10 +92,23 @@ function ParticleBackground() {
 
     animate(); // Start the loop
 
-    // Cleanup: cancel animation and remove listener when component unmounts
+    // Pause the rAF loop entirely when the tab is backgrounded — no visible
+    // benefit to animating particles nobody is looking at, and it frees up
+    // CPU/battery for whatever the user switched to.
+    const handleVisibility = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animId);
+      } else {
+        animate();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    // Cleanup: cancel animation and remove listeners when component unmounts
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []); // [] = run only once when component first appears
 

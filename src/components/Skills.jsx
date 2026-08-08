@@ -8,9 +8,9 @@
 // - 3D tilt effect using onMouseMove
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { skills } from "../data/portfolioData";
+import { skills, skillGroups } from "../data/portfolioData";
 
 // SectionTitle is a reusable component used across sections
 function SectionTitle({ label, title }) {
@@ -46,7 +46,27 @@ function SectionTitle({ label, title }) {
 }
 
 // ── SKILL CARD ──
-function SkillCard({ icon, category, name, tags, index, isLearning }) {
+// Small ●●●●○ proficiency indicator — quick-scan alternative to a
+// paragraph explaining how comfortable you are with something.
+function ProficiencyDots({ level = 0, accent }) {
+  return (
+    <div style={{ display: "flex", gap: 5, marginTop: 14 }} aria-label={`Proficiency ${level} of 5`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <span
+          key={i}
+          style={{
+            width: 6, height: 6, borderRadius: "50%",
+            background: i < level ? accent : "var(--border)",
+            boxShadow: i < level ? `0 0 6px ${accent}` : "none",
+            transition: "background 0.3s ease",
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function SkillCard({ icon, category, name, tags, index, isLearning, level }) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [spotX, setSpotX] = useState("50%");
   const [spotY, setSpotY] = useState("50%");
@@ -80,6 +100,8 @@ function SkillCard({ icon, category, name, tags, index, isLearning }) {
       ref={ref}
       initial={{ opacity: 0, y: 40 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
+      exit={{ opacity: 0, scale: 0.92 }}
+      layout
       transition={{ duration: 0.6, delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
@@ -170,6 +192,8 @@ function SkillCard({ icon, category, name, tags, index, isLearning }) {
         ))}
       </div>
 
+      <ProficiencyDots level={level} accent={isLearning ? learnAccent : "var(--accent)"} />
+
       <style>{`
         @keyframes learnPulse {
           0%,100% { opacity:1; box-shadow: 0 0 8px rgba(168,85,247,0.3); }
@@ -181,6 +205,12 @@ function SkillCard({ icon, category, name, tags, index, isLearning }) {
 }
 
 function Skills() {
+  const [activeGroup, setActiveGroup] = useState("all");
+
+  const filteredSkills = activeGroup === "all"
+    ? skills
+    : skills.filter((s) => s.group === activeGroup);
+
   return (
     <section
       id="skills"
@@ -193,6 +223,31 @@ function Skills() {
     >
       <SectionTitle label="Technical Arsenal" title="Skills" />
 
+      {/* Filter tabs — turns a long single grid into something scannable */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 36, marginTop: -30 }}>
+        {skillGroups.map((g) => {
+          const isActive = activeGroup === g.id;
+          return (
+            <button
+              key={g.id}
+              onClick={() => setActiveGroup(g.id)}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: 11,
+                letterSpacing: 1.5, textTransform: "uppercase",
+                padding: "8px 16px", borderRadius: 100,
+                border: `1px solid ${isActive ? "var(--accent)" : "var(--border)"}`,
+                background: isActive ? "rgba(59,255,160,0.1)" : "transparent",
+                color: isActive ? "var(--accent)" : "var(--muted)",
+                cursor: "pointer",
+                transition: "all 0.25s ease",
+              }}
+            >
+              {g.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* CSS Grid — auto-fit makes it responsive automatically */}
       <div
         style={{
@@ -201,15 +256,23 @@ function Skills() {
           gap: 20,
         }}
       >
-        {/* Map over skills array from our data file */}
-        {skills.map((skill, index) => (
-          <SkillCard
-            key={skill.name} // Unique key for React's reconciliation
-            {...skill}        // Spread all skill properties as props
-            index={index}     // Pass index for stagger animation
-          />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {/* Map over the filtered skills so switching tabs re-triggers entrance animation */}
+          {filteredSkills.map((skill, index) => (
+            <SkillCard
+              key={skill.name} // Unique key for React's reconciliation
+              {...skill}        // Spread all skill properties as props
+              index={index}     // Pass index for stagger animation
+            />
+          ))}
+        </AnimatePresence>
       </div>
+
+      {filteredSkills.length === 0 && (
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--muted)", marginTop: 20 }}>
+          Nothing here yet.
+        </p>
+      )}
     </section>
   );
 }

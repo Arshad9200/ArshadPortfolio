@@ -1,5 +1,5 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import HeroCanvas from "./HeroCanvas";
 import { personalInfo } from "../data/portfolioData";
@@ -8,22 +8,51 @@ import { personalInfo } from "../data/portfolioData";
 // Your PDF must be named exactly: Arshad_Ali_Resume.pdf
 // and placed inside the public/ folder of your project.
 // public/Arshad_Ali_Resume.pdf → accessible at /Arshad_Ali_Resume.pdf
-const downloadResume = () => {
-  const link = document.createElement("a");
-  link.href = "/Arshad_Ali_Resume.pdf";        // matches exact filename in public/
-  link.download = "Arshad_Ali_Resume.pdf";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+// (moved inside the Hero component below so it can trigger the toast)
 
 const fadeUpVariants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0 },
 };
 
+// Small personal touch — visitors landing at different times see a
+// slightly different opener instead of a static badge every time.
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Working late? Same";
+}
+
 function Hero() {
   const typeSequence = personalInfo.roles.flatMap((role) => ["> " + role, 2000]);
+  const [emailCopied, setEmailCopied] = useState(false);
+  const [resumeToast, setResumeToast] = useState(false);
+
+  const downloadResume = () => {
+    const link = document.createElement("a");
+    link.href = "/Arshad_Ali_Resume.pdf";
+    link.download = "Arshad_Ali_Resume.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setResumeToast(true);
+    setTimeout(() => setResumeToast(false), 2500);
+  };
+
+  // mailto: links only work if the visitor's browser/OS has a default mail
+  // app configured — many don't (especially on work laptops). Copying the
+  // address to the clipboard on click means the button still does
+  // something useful even when mailto: silently fails.
+  const copyEmail = () => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(personalInfo.email).then(() => {
+        setEmailCopied(true);
+        setTimeout(() => setEmailCopied(false), 2000);
+      }).catch(() => {});
+    }
+  };
 
   return (
     <section
@@ -54,10 +83,10 @@ function Hero() {
         gap: 20,
       }}>
 
-        {/* 1. Available badge */}
+        {/* 1. Available badge — standalone status pill, shown first */}
         <motion.div
           variants={fadeUpVariants} initial="hidden" animate="visible"
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
           style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             border: "1px solid var(--border)", background: "rgba(59,255,160,0.05)",
@@ -70,6 +99,16 @@ function Hero() {
           Available for Opportunities
         </motion.div>
 
+        {/* 0. Greeting — sits directly above the name so it reads as one sentence:
+             "Good morning, I'm" → "Arshad Ali", with no badge breaking it up. */}
+        <motion.p
+          variants={fadeUpVariants} initial="hidden" animate="visible"
+          transition={{ duration: 0.6, delay: 0.1 }}
+          style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: "var(--muted)", margin: 0 }}
+        >
+          {getGreeting()}, I'm
+        </motion.p>
+
         {/* 2. Name */}
         <motion.h1
           variants={fadeUpVariants} initial="hidden" animate="visible"
@@ -79,7 +118,7 @@ function Hero() {
             fontSize: "clamp(60px, 8vw, 120px)",
             lineHeight: 0.88,
             letterSpacing: -2,
-            margin: 0,
+            margin: "-8px 0 0",
           }}
         >
           Arshad
@@ -119,10 +158,11 @@ function Hero() {
           />
           <ActionButton
             href={"mailto:" + personalInfo.email}
+            onClick={copyEmail}
             color="var(--accent3)"
             borderColor="var(--accent3)"
             glowColor="rgba(255,96,96,0.2)"
-            label="✉️ Email Me"
+            label={emailCopied ? "✓ Email Copied" : "✉️ Email Me"}
           />
           <button
             onClick={downloadResume}
@@ -167,6 +207,29 @@ function Hero() {
         <div style={{ width:1, height:44, background:"linear-gradient(to bottom, var(--accent), transparent)", animation:"scrollPulse 2s ease-in-out infinite" }} />
       </motion.div>
 
+      {/* Resume download confirmation toast */}
+      <AnimatePresence>
+        {resumeToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              position: "fixed", bottom: 96, right: 28, zIndex: 200,
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 18px", borderRadius: 8,
+              background: "rgba(13,17,23,0.95)",
+              border: "1px solid rgba(59,255,160,0.35)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+              fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text)",
+            }}
+          >
+            <span style={{ color: "var(--accent)" }}>✓</span> Resume downloading...
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
         @keyframes scrollPulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
@@ -175,10 +238,11 @@ function Hero() {
   );
 }
 
-function ActionButton({ href, color, borderColor, glowColor, label }) {
+function ActionButton({ href, color, borderColor, glowColor, label, onClick }) {
   return (
     <a
       href={href}
+      onClick={onClick}
       style={{
         display:"inline-flex", alignItems:"center", gap:8,
         padding:"13px 28px",

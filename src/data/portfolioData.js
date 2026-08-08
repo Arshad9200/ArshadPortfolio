@@ -28,11 +28,24 @@ export const stats = [
   { number: 9.15, label: "B.Tech CGPA", suffix: "/10" },
 ];
 
+// `level` = proficiency out of 5, shown as a dot scale on the card.
+// `group` = which filter tab this card appears under on the Skills section.
+export const skillGroups = [
+  { id: "all",     label: "All"      },
+  { id: "backend", label: "Backend"  },
+  { id: "frontend",label: "Frontend" },
+  { id: "data",    label: "Data"     },
+  { id: "tools",   label: "Tools"    },
+  { id: "ai",      label: "AI"       },
+];
+
 export const skills = [
   {
     icon: "🐍",
     category: "Core Language",
     name: "Python",
+    level: 5,
+    group: "backend",
     tags: [
       "Async Programming",
       "OOP",
@@ -45,6 +58,8 @@ export const skills = [
     icon: "⚡",
     category: "Backend",
     name: "API Development",
+    level: 5,
+    group: "backend",
     tags: [
       "Sanic",
       "REST APIs",
@@ -57,6 +72,8 @@ export const skills = [
     icon: "🗄️",
     category: "Databases",
     name: "Data & Storage",
+    level: 4,
+    group: "data",
     tags: [
       "PostgreSQL",
       "MySQL",
@@ -70,6 +87,8 @@ export const skills = [
     icon: "⚛️",
     category: "Frontend",
     name: "React",
+    level: 4,
+    group: "frontend",
     tags: [
       "React.js",
       "Redux Toolkit",
@@ -84,6 +103,8 @@ export const skills = [
     icon: "🧪",
     category: "Testing",
     name: "QA & Debugging",
+    level: 4,
+    group: "tools",
     tags: [
       "Postman",
       "API Testing",
@@ -93,9 +114,24 @@ export const skills = [
     ],
   },
   {
+  icon: "🐍",
+  category: "Python Libraries",
+  name: "Data Processing & Visualization",
+  level: 3,
+  group: "data",
+  tags: [
+    "NumPy",
+    "Pandas",
+    "Matplotlib",
+    "Jupyter Notebook",
+  ],
+},
+  {
     icon: "🛠️",
     category: "Tools & Workflow",
     name: "Development Tools",
+    level: 4,
+    group: "tools",
     tags: ["Git", "GitHub", "JIRA", "Code Review", "Version Control"],
   },
 
@@ -103,6 +139,8 @@ export const skills = [
     icon: "🤖",
     category: "Leveling Up",
     name: "AI & Gen AI",
+    level: 2,
+    group: "ai",
     tags: [
       "Generative AI",
       "AI Agents",
@@ -120,6 +158,8 @@ export const experience = [
     date: "Feb 2025 – Mar 2026",
     title: "Software Engineer",
     company: "Atom Build · Anant Atom Consultancy Private Limited",
+    companyShort: "AB",
+    logo: "/images/logos/atom-build.png",
     points: [
       "Designed and optimized scalable REST APIs using Python (Sanic), ensuring high performance, data validation, and robust error handling.",
       "Built and maintained backend workflows by processing data from PostgreSQL, AWS S3, and Apache Iceberg for data-driven features.",
@@ -131,11 +171,27 @@ export const experience = [
   },
 ];
 
+
+
+// Short tech chips rendered as icon pills on each project card
+// (separate from the longer `stack` string used elsewhere).
+const TECH_ICON_MAP = {
+  Python: "🐍", Sanic: "⚡", PostgreSQL: "🗄️", React: "⚛️", JavaScript: "🟨",
+};
+
+function toTechChips(stackString) {
+  return stackString.split("·").map((s) => s.trim()).map((name) => ({
+    name,
+    icon: TECH_ICON_MAP[name] || "▹",
+  }));
+}
+
 export const projects = [
   {
     title: "Atom Hub – Data Platform & Job Orchestration",
     stack: "Python · Sanic · PostgreSQL · React · JavaScript",
     isLive: true,
+    image: "/images/projects/atomhub.png",
     link: "https://devapp.atomhub.in/",
     points: [
       "Built and enhanced backend services and REST APIs using Python (Sanic) to support job orchestration and data processing workflows.",
@@ -150,6 +206,7 @@ export const projects = [
     title: "Broadcast India – Live Streaming Analytics",
     stack: "Python · Sanic · PostgreSQL · React · JavaScript",
     isLive: true,
+    image: "/images/projects/broadcast-india.png",
     link: "https://brfe.atomhub.in/",
     points: [
       "Designed and implemented backend data models and REST APIs to handle video analytics and user interaction data.",
@@ -161,6 +218,9 @@ export const projects = [
     ],
   },
 ];
+
+// Attach the icon-chip breakdown to every project without hand-typing it twice.
+projects.forEach((p) => { p.techChips = toTechChips(p.stack); });
 
 export const education = {
   degree: "Bachelor of Technology in Computer Science",
@@ -178,3 +238,44 @@ export const floatingTech = [
   "AWS",
   "Debugging",
 ];
+
+
+
+
+export const currentRole = {
+  date: "June 2026 – Present",              
+  title: "Technical Support Executive",
+  program: "NAPS",                         
+  company: "Bluspring Enterprises Limited",
+  companyShort: "BE",
+  logo: "/images/logos/bluspring.png",
+  points: [
+    "Provide technical assistance and troubleshoot day-to-day system and user-related issues.",
+    "Analyze reported issues, perform initial diagnosis, and coordinate with relevant teams for resolution.",
+    "Maintain issue documentation and follow standard troubleshooting processes.",
+  ],
+  parallelNote:
+    "Continuously upskilling in Python backend development, Machine Learning, LangChain, and AI agent workflows while preparing for AI/ML engineering opportunities.",
+};
+
+
+// untouched.
+function withProtocol(url) {
+  if (!url) return url;
+  return /^(https?:|mailto:|tel:)/i.test(url) ? url : `https://${url}`;
+}
+
+// ============================================================
+// SOCIAL / PROFILE LINKS — single source of truth.
+// ============================================================
+const rawSocialLinks = {
+  github: "https://github.com/Arshad9200",
+  linkedin: "www.linkedin.com/in/arshadalideveloper",
+  whatsapp: "https://wa.me/917479914419",
+  wellfound: "https://wellfound.com/u/arshad-ali-103",
+  email: `mailto:${personalInfo.email}`,
+};
+
+export const socialLinks = Object.fromEntries(
+  Object.entries(rawSocialLinks).map(([key, url]) => [key, withProtocol(url)])
+);

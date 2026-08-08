@@ -6,11 +6,11 @@
 // - Timeline layout with animated entries
 // - useInView hook for scroll-triggered animations
 
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import CountUp from "react-countup";
-import { experience, stats } from "../data/portfolioData";
+import { experience, stats, currentRole } from "../data/portfolioData";
 import { SectionTitle } from "./Skills"; // Re-using component from Skills
 
 // ── STAT CARD ──
@@ -35,8 +35,8 @@ function StatCard({ number, label, suffix }) {
           <CountUp
             start={0}
             end={number}
-            duration={2}       // 2 seconds to count up
-            suffix={suffix}    // Add "+" or "%" after number
+            duration={2} // 2 seconds to count up
+            suffix={suffix} // Add "+" or "%" after number
           />
         ) : (
           "0" // Before in view, show 0
@@ -58,9 +58,66 @@ function StatCard({ number, label, suffix }) {
   );
 }
 
+// ── COMPANY MONOGRAM CHIP ──
+// Small square badge with the company's initials — adds a bit of visual
+// weight next to the timeline dot without needing a real logo asset.
+function CompanyChip({ short, accent, logo }) {
+  if (!short) return null;
+
+  if (logo) {
+    return (
+      <img
+        src={logo}
+        alt={`${short} logo`}
+        style={{
+          width: 28,
+          height: 28,
+          objectFit: "contain",
+          borderRadius: 6,
+          marginRight: 10,
+          flexShrink: 0,
+          background: "rgba(255,255,255,0.04)",
+          padding: 2,
+        }}
+      />
+    );
+  }
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 26,
+        height: 26,
+        borderRadius: 6,
+        border: `1px solid ${accent}`,
+        background: "rgba(255,255,255,0.03)",
+        fontFamily: "var(--font-mono)",
+        fontSize: 10,
+        fontWeight: 700,
+        color: accent,
+        marginRight: 10,
+        flexShrink: 0,
+      }}
+    >
+      {short}
+    </span>
+  );
+}
+
 // ── EXPERIENCE ITEM ──
 // One job entry in the timeline
-function ExperienceItem({ date, title, company, points, index }) {
+function ExperienceItem({
+  date,
+  title,
+  company,
+  companyShort,
+  logo,
+  points,
+  index,
+}) {
   const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
 
   return (
@@ -110,12 +167,15 @@ function ExperienceItem({ date, title, company, points, index }) {
       {/* Company */}
       <p
         style={{
+          display: "flex",
+          alignItems: "center",
           fontSize: 15,
           color: "var(--accent2)",
           fontWeight: 600,
           marginBottom: 20,
         }}
       >
+        <CompanyChip short={companyShort} accent="var(--accent2)" logo={logo} />
         {company}
       </p>
 
@@ -135,7 +195,9 @@ function ExperienceItem({ date, title, company, points, index }) {
             }}
           >
             {/* Arrow bullet */}
-            <span style={{ color: "var(--accent)", flexShrink: 0, marginTop: 2 }}>
+            <span
+              style={{ color: "var(--accent)", flexShrink: 0, marginTop: 2 }}
+            >
               →
             </span>
             {point}
@@ -146,7 +208,148 @@ function ExperienceItem({ date, title, company, points, index }) {
   );
 }
 
+// ── CURRENT ROLE CARD ──
+// Deliberately smaller and muted compared to ExperienceItem —
+// keeps this section honest about the present without competing
+// visually with the engineering work above it.
+function CurrentRoleCard({
+  date,
+  title,
+  program,
+  company,
+  companyShort,
+  logo,
+  points,
+  parallelNote,
+}) {
+  const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -20 }}
+      animate={inView ? { opacity: 1, x: 0 } : {}}
+      transition={{ duration: 0.5 }}
+      style={{
+        position: "relative",
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: 10,
+        padding: "20px 24px",
+        maxWidth: 640,
+      }}
+    >
+      {/* Muted dot — deliberately not the glowing accent dot used for engineering roles */}
+      <div
+        style={{
+          position: "absolute",
+          left: -38,
+          top: 26,
+          width: 10,
+          height: 10,
+          borderRadius: "50%",
+          background: "var(--muted)",
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 4,
+        }}
+      >
+        <h4 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
+          {title}{" "}
+          <span style={{ color: "var(--muted)", fontWeight: 400 }}>
+            · {program}
+          </span>
+        </h4>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--muted)",
+            letterSpacing: 1,
+          }}
+        >
+          {date}
+        </p>
+      </div>
+
+      <p
+        style={{
+          display: "flex",
+          alignItems: "center",
+          fontSize: 13,
+          color: "var(--muted)",
+          marginBottom: 14,
+        }}
+      >
+        <CompanyChip short={companyShort} accent="var(--muted)" logo={logo} />
+        {company}
+      </p>
+
+      <ul style={{ marginBottom: parallelNote ? 14 : 0 }}>
+        {points.map((point, i) => (
+          <li
+            key={i}
+            style={{
+              display: "flex",
+              gap: 10,
+              alignItems: "flex-start",
+              padding: "3px 0",
+              fontSize: 13,
+              color: "var(--muted)",
+              lineHeight: 1.6,
+            }}
+          >
+            <span
+              style={{
+                color: "var(--muted)",
+                flexShrink: 0,
+                marginTop: 2,
+                opacity: 0.6,
+              }}
+            >
+              →
+            </span>
+            {point}
+          </li>
+        ))}
+      </ul>
+
+      {parallelNote && (
+        <p
+          style={{
+            fontSize: 12,
+            color: "rgba(168,85,247,0.85)",
+            borderTop: "1px solid var(--border)",
+            paddingTop: 12,
+            lineHeight: 1.6,
+          }}
+        >
+          {parallelNote}
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
 function Experience() {
+  // Scroll-linked timeline fill: an accent overlay line that grows to match
+  // scroll progress through this section, so the static gradient line
+  // actually feels like it's tracking your position instead of sitting there.
+  const timelineRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: timelineRef,
+    offset: ["start 0.8", "end 0.6"],
+  });
+  const fillHeight = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
+
   return (
     <section
       id="experience"
@@ -175,12 +378,13 @@ function Experience() {
 
       {/* Timeline */}
       <div
+        ref={timelineRef}
         style={{
           position: "relative",
           paddingLeft: 32,
         }}
       >
-        {/* Vertical line on left */}
+        {/* Base track — faint, always visible */}
         <div
           style={{
             position: "absolute",
@@ -188,14 +392,58 @@ function Experience() {
             top: 0,
             bottom: 0,
             width: 1,
-            background: "linear-gradient(to bottom, var(--accent), transparent)",
+            background: "var(--border)",
+          }}
+        />
+        {/* Accent fill — grows with scroll progress through the section */}
+        <motion.div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: 1,
+            height: fillHeight,
+            background:
+              "linear-gradient(to bottom, var(--accent), var(--accent2))",
+            boxShadow: "0 0 8px rgba(59,255,160,0.5)",
           }}
         />
 
-        {/* Render each experience item */}
+        {/* Subsection label — signals "this is the featured work" */}
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            marginBottom: 24,
+          }}
+        >
+          <span style={{ opacity: 0.5 }}>//</span> Engineering
+        </p>
+
+        {/* Render each engineering experience item */}
         {experience.map((exp, index) => (
           <ExperienceItem key={index} {...exp} index={index} />
         ))}
+
+        {/* Subsection label for current role — visually quieter */}
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            marginBottom: 20,
+            marginTop: 16,
+          }}
+        >
+          <span style={{ opacity: 0.5 }}>//</span> Currently
+        </p>
+
+        <CurrentRoleCard {...currentRole} />
       </div>
     </section>
   );

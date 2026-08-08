@@ -23,7 +23,17 @@ function Cursor() {
   const dotRef  = useRef(null);
   const ringRef = useRef(null);
 
+  // Touch/coarse-pointer devices (phones, tablets) have no real cursor —
+  // a "hidden until first mousemove" dot is fragile since mousemove may
+  // never fire, so we bail out explicitly instead of relying on that.
+  const isTouchDevice =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(pointer: coarse)").matches;
+
   useEffect(() => {
+    if (isTouchDevice) return;
+
     const dot  = dotRef.current;
     const ring = ringRef.current;
 
@@ -68,6 +78,8 @@ function Cursor() {
       cancelAnimationFrame(animId);
     };
   }, []); // Empty [] = run this effect only once on mount
+
+  if (isTouchDevice) return null;
 
   return (
     <>

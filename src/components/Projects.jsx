@@ -7,20 +7,85 @@
 // - Conditional class rendering
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { projects } from "../data/portfolioData";
 import { SectionTitle } from "./Skills";
 
-function ProjectCard({ title, stack, isLive, points, link, index }) {
+// ── PROJECT THUMBNAIL ──
+// No real screenshots exist yet, so this renders a stylized "browser
+// window" mockup (traffic-light dots + gradient body + big initial) as a
+// placeholder. Swap the body background for an <img src={project.image}>
+// later without touching the frame markup.
+function ProjectThumbnail({ title, image, gradientFrom, gradientTo }) {
+  const initial = title.trim().charAt(0).toUpperCase();
+  return (
+    <div style={{
+      borderRadius: 10,
+      overflow: "hidden",
+      border: "1px solid var(--border)",
+      marginBottom: 22,
+    }}>
+      {/* Fake browser chrome */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6,
+        padding: "8px 10px",
+        background: "rgba(255,255,255,0.03)",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff5f57" }} />
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#febc2e" }} />
+        <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#28c840" }} />
+      </div>
+      {/* "Screen" area */}
+      <div style={{
+        height: 140,
+        background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        position: "relative",
+      }}>
+        {image ? (
+          <img
+            src={image}
+            alt={`${title} preview`}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        ) : (
+          <span style={{
+            fontFamily: "var(--font-display)", fontSize: 56,
+            color: "rgba(255,255,255,0.15)",
+          }}>
+            {initial}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({ title, stack, techChips, isLive, image, points, link, github, index }) {
   const [isHovered, setIsHovered] = useState(false);
   const { ref, inView } = useInView({ threshold: 0.15, triggerOnce: true });
+
+  // Alternate two gradient pairs so cards don't all look identical.
+  const gradients = [
+    ["rgba(59,255,160,0.35)", "rgba(0,207,255,0.35)"],
+    ["rgba(0,207,255,0.35)", "rgba(168,85,247,0.35)"],
+  ];
+  const [gradientFrom, gradientTo] = gradients[index % gradients.length];
 
   return (
     <motion.div
       ref={ref}
       initial={{ opacity: 0, y: 50 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
+      exit={{ opacity: 0, scale: 0.92 }}
+      layout
       transition={{ duration: 0.7, delay: index * 0.15 }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -28,7 +93,7 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
         background: "var(--card)",
         border: `1px solid ${isHovered ? "rgba(59,255,160,0.25)" : "var(--border)"}`,
         borderRadius: 16,
-        padding: 36,
+        padding: 24,
         position: "relative",
         overflow: "hidden",
         transition: "all 0.4s cubic-bezier(0.23,1,0.32,1)",
@@ -43,7 +108,13 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
         background: "linear-gradient(90deg, var(--accent), var(--accent2))",
         transform: `scaleX(${isHovered ? 1 : 0})`,
         transformOrigin: "left", transition: "transform 0.4s ease",
+        zIndex: 2,
       }} />
+
+      <ProjectThumbnail title={title} image={image} gradientFrom={gradientFrom} gradientTo={gradientTo} />
+
+      {/* Inner padding wrapper for everything below the thumbnail */}
+      <div style={{ padding: "0 12px 12px" }}>
 
       {/* Top row: Live badge + Visit link */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
@@ -54,33 +125,61 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
           </div>
         )}
 
-        {/* Clickable Visit button */}
-        {link && (
-          <a
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
-              textTransform: "uppercase", color: "var(--accent2)",
-              border: "1px solid rgba(0,207,255,0.3)", padding: "4px 12px",
-              borderRadius: 4, textDecoration: "none",
-              transition: "all 0.3s",
-              background: "rgba(0,207,255,0.05)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(0,207,255,0.12)";
-              e.currentTarget.style.borderColor = "rgba(0,207,255,0.6)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(0,207,255,0.05)";
-              e.currentTarget.style.borderColor = "rgba(0,207,255,0.3)";
-            }}
-          >
-            ↗ Visit Site
-          </a>
-        )}
+        {/* Clickable Visit + Code buttons */}
+        <div style={{ display: "flex", gap: 8 }}>
+          {github && (
+            <a
+              href={github}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
+                textTransform: "uppercase", color: "var(--text)",
+                border: "1px solid var(--border)", padding: "4px 12px",
+                borderRadius: 4, textDecoration: "none",
+                transition: "all 0.3s",
+                background: "rgba(255,255,255,0.03)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.3)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+                e.currentTarget.style.borderColor = "var(--border)";
+              }}
+            >
+              {"</>"} Code
+            </a>
+          )}
+          {link && (
+            <a
+              href={link}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 1.5,
+                textTransform: "uppercase", color: "var(--accent2)",
+                border: "1px solid rgba(0,207,255,0.3)", padding: "4px 12px",
+                borderRadius: 4, textDecoration: "none",
+                transition: "all 0.3s",
+                background: "rgba(0,207,255,0.05)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(0,207,255,0.12)";
+                e.currentTarget.style.borderColor = "rgba(0,207,255,0.6)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(0,207,255,0.05)";
+                e.currentTarget.style.borderColor = "rgba(0,207,255,0.3)";
+              }}
+            >
+              ↗ Visit Site
+            </a>
+          )}
+        </div>
       </div>
 
       <h3
@@ -94,17 +193,34 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
         {title}
       </h3>
 
-      <p
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: 11,
-          color: "var(--accent2)",
-          marginBottom: 20,
-          letterSpacing: 1,
-        }}
-      >
-        {stack}
-      </p>
+      {techChips && techChips.length > 0 ? (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+          {techChips.map((chip) => (
+            <span key={chip.name} style={{
+              display: "inline-flex", alignItems: "center", gap: 5,
+              fontFamily: "var(--font-mono)", fontSize: 10, letterSpacing: 0.5,
+              color: "var(--accent2)",
+              border: "1px solid rgba(0,207,255,0.25)",
+              background: "rgba(0,207,255,0.05)",
+              padding: "3px 9px", borderRadius: 100,
+            }}>
+              <span>{chip.icon}</span>{chip.name}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--accent2)",
+            marginBottom: 20,
+            letterSpacing: 1,
+          }}
+        >
+          {stack}
+        </p>
+      )}
 
       <ul>
         {points.map((point, i) => (
@@ -136,6 +252,8 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
         ))}
       </ul>
 
+      </div>
+
       <style>{`
         @keyframes pulse {
           0%,100% { opacity:1; transform:scale(1); }
@@ -147,6 +265,9 @@ function ProjectCard({ title, stack, isLive, points, link, index }) {
 }
 
 function Projects() {
+  const [filter, setFilter] = useState("all");
+  const filtered = filter === "all" ? projects : projects.filter((p) => p.isLive);
+
   return (
     <section
       id="projects"
@@ -159,6 +280,30 @@ function Projects() {
     >
       <SectionTitle label="What I've Built" title="Projects" />
 
+      <div style={{ display: "flex", gap: 10, marginBottom: 36, marginTop: -30 }}>
+        {["all", "live"].map((f) => {
+          const isActive = filter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: 11,
+                letterSpacing: 1.5, textTransform: "uppercase",
+                padding: "8px 16px", borderRadius: 100,
+                border: `1px solid ${isActive ? "var(--accent)" : "var(--border)"}`,
+                background: isActive ? "rgba(59,255,160,0.1)" : "transparent",
+                color: isActive ? "var(--accent)" : "var(--muted)",
+                cursor: "pointer",
+                transition: "all 0.25s ease",
+              }}
+            >
+              {f === "all" ? "All Projects" : "Live Only"}
+            </button>
+          );
+        })}
+      </div>
+
       <div
         style={{
           display: "grid",
@@ -166,9 +311,11 @@ function Projects() {
           gap: 24,
         }}
       >
-        {projects.map((project, index) => (
-          <ProjectCard key={project.title} {...project} index={index} />
-        ))}
+        <AnimatePresence mode="popLayout">
+          {filtered.map((project, index) => (
+            <ProjectCard key={project.title} {...project} index={index} />
+          ))}
+        </AnimatePresence>
       </div>
     </section>
   );
