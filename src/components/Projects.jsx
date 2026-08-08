@@ -6,11 +6,23 @@
 // - Hover state management with useState
 // - Conditional class rendering
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { projects } from "../data/portfolioData";
 import { SectionTitle } from "./Skills";
+
+// 640px = phones only — tablet/desktop keep the exact current layout.
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  return isMobile;
+}
 
 // ── PROJECT THUMBNAIL ──
 // No real screenshots exist yet, so this renders a stylized "browser
@@ -37,23 +49,20 @@ function ProjectThumbnail({ title, image, gradientFrom, gradientTo }) {
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#febc2e" }} />
         <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#28c840" }} />
       </div>
-      {/* "Screen" area */}
+      {/* "Screen" area — real screenshot if provided, gradient placeholder otherwise */}
       <div style={{
         height: 140,
-        background: `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
+        background: image ? "var(--card)" : `linear-gradient(135deg, ${gradientFrom}, ${gradientTo})`,
         display: "flex", alignItems: "center", justifyContent: "center",
         position: "relative",
+        overflow: "hidden",
       }}>
         {image ? (
           <img
             src={image}
-            alt={`${title} preview`}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
+            alt={`${title} screenshot`}
+            loading="lazy"
+            style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top" }}
           />
         ) : (
           <span style={{
@@ -68,9 +77,15 @@ function ProjectThumbnail({ title, image, gradientFrom, gradientTo }) {
   );
 }
 
-function ProjectCard({ title, stack, techChips, isLive, image, points, link, github, index }) {
+function ProjectCard({ title, stack, techChips, isLive, points, link, github, image, index }) {
   const [isHovered, setIsHovered] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { ref, inView } = useInView({ threshold: 0.15, triggerOnce: true });
+  const isMobile = useIsMobile();
+
+  const COLLAPSE_AT = 3;
+  const shouldCollapse = isMobile && !expanded && points.length > COLLAPSE_AT;
+  const visiblePoints = shouldCollapse ? points.slice(0, COLLAPSE_AT) : points;
 
   // Alternate two gradient pairs so cards don't all look identical.
   const gradients = [
@@ -93,7 +108,7 @@ function ProjectCard({ title, stack, techChips, isLive, image, points, link, git
         background: "var(--card)",
         border: `1px solid ${isHovered ? "rgba(59,255,160,0.25)" : "var(--border)"}`,
         borderRadius: 16,
-        padding: 24,
+        padding: isMobile ? 16 : 24,
         position: "relative",
         overflow: "hidden",
         transition: "all 0.4s cubic-bezier(0.23,1,0.32,1)",
@@ -223,7 +238,7 @@ function ProjectCard({ title, stack, techChips, isLive, image, points, link, git
       )}
 
       <ul>
-        {points.map((point, i) => (
+        {visiblePoints.map((point, i) => (
           <li
             key={i}
             style={{
@@ -252,6 +267,20 @@ function ProjectCard({ title, stack, techChips, isLive, image, points, link, git
         ))}
       </ul>
 
+      {isMobile && points.length > COLLAPSE_AT && (
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          style={{
+            fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 1,
+            textTransform: "uppercase", color: "var(--accent)",
+            background: "none", border: "none", padding: "6px 0 0",
+            cursor: "pointer", textAlign: "left",
+          }}
+        >
+          {expanded ? "− Show less" : `+ Read more (${points.length - COLLAPSE_AT} more)`}
+        </button>
+      )}
+
       </div>
 
       <style>{`
@@ -266,6 +295,7 @@ function ProjectCard({ title, stack, techChips, isLive, image, points, link, git
 
 function Projects() {
   const [filter, setFilter] = useState("all");
+  const isMobile = useIsMobile();
   const filtered = filter === "all" ? projects : projects.filter((p) => p.isLive);
 
   return (
@@ -274,7 +304,7 @@ function Projects() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "100px 48px",
+        padding: isMobile ? "60px 20px" : "100px 48px",
         background: "linear-gradient(135deg, rgba(0,0,0,0.3), rgba(13,17,23,0.5))",
       }}
     >
@@ -304,11 +334,15 @@ function Projects() {
         })}
       </div>
 
+      {/* Grid minimum column width was 340px — on a 375px-wide phone,
+          after 48px section padding, that's ~279px of usable width, well
+          under the 340px minimum, which forced horizontal overflow.
+          Reduced to 280px on mobile only; desktop/tablet untouched. */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-          gap: 24,
+          gridTemplateColumns: `repeat(auto-fit, minmax(${isMobile ? 280 : 340}px, 1fr))`,
+          gap: isMobile ? 16 : 24,
         }}
       >
         <AnimatePresence mode="popLayout">

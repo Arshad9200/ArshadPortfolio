@@ -4,12 +4,25 @@
 // A decorative element that floats on the right side.
 // Demonstrates: array.map(), hover state, CSS writing-mode
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { floatingTech } from "../data/portfolioData";
 
 function FloatingTech() {
   const [hovered, setHovered] = useState(null);
+
+  // Purely decorative — on a phone it just crowds the content and eats
+  // width with nothing functional gained, so it's hidden below 640px.
+  // Tablet (768px+) and desktop are completely unaffected.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (isMobile) return null;
 
   return (
     <motion.div

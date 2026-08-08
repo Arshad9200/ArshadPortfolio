@@ -7,7 +7,7 @@
 // - useState for hover state on each card
 // - 3D tilt effect using onMouseMove
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { skills, skillGroups } from "../data/portfolioData";
@@ -207,6 +207,16 @@ function SkillCard({ icon, category, name, tags, index, isLearning, level }) {
 function Skills() {
   const [activeGroup, setActiveGroup] = useState("all");
 
+  // 640px = phones only — tablet/desktop keep the exact current 48px
+  // padding and 280px grid minimum unchanged.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const filteredSkills = activeGroup === "all"
     ? skills
     : skills.filter((s) => s.group === activeGroup);
@@ -217,7 +227,7 @@ function Skills() {
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "100px 48px",
+        padding: isMobile ? "60px 20px" : "100px 48px",
         background: "linear-gradient(135deg, rgba(13,17,23,0.8), rgba(3,7,18,0.8))",
       }}
     >
@@ -248,12 +258,15 @@ function Skills() {
         })}
       </div>
 
-      {/* CSS Grid — auto-fit makes it responsive automatically */}
+      {/* CSS Grid — auto-fit makes it responsive automatically. Minimum
+          column width is reduced on phones only, so a 280px minimum
+          doesn't force overflow on a 360px-wide device once side padding
+          is subtracted. */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: 20,
+          gridTemplateColumns: `repeat(auto-fit, minmax(${isMobile ? 240 : 280}px, 1fr))`,
+          gap: isMobile ? 14 : 20,
         }}
       >
         <AnimatePresence mode="popLayout">

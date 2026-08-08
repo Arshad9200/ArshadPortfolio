@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import HeroCanvas from "./HeroCanvas";
@@ -30,6 +30,16 @@ function Hero() {
   const [emailCopied, setEmailCopied] = useState(false);
   const [resumeToast, setResumeToast] = useState(false);
 
+  // 640px = phones only. Tablets (768px+) and desktop keep the exact
+  // existing layout — nothing below changes anything at those widths.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const downloadResume = () => {
     const link = document.createElement("a");
     link.href = "/Arshad_Ali_Resume.pdf";
@@ -60,27 +70,32 @@ function Hero() {
       style={{
         position: "relative",
         zIndex: 1,
-        // Use 100dvh for true full-screen on all devices
+        // Desktop/tablet: unchanged 100dvh hard-clip layout.
+        // Mobile: content is allowed to be taller than one screen and
+        // scroll naturally instead of being clipped — a phone screen
+        // can't fit name+summary+buttons+globe in one viewport without
+        // either shrinking everything illegibly or clipping content.
         minHeight: "100dvh",
-        height: "100dvh",
+        height: isMobile ? "auto" : "100dvh",
         display: "flex",
-        alignItems: "center",
-        // Top padding = navbar height. Bottom padding keeps buttons visible
-        padding: "80px 48px 80px",
-        overflow: "hidden",
-        gap: 40,
+        flexDirection: isMobile ? "column" : "row",
+        alignItems: isMobile ? "stretch" : "center",
+        justifyContent: isMobile ? "flex-start" : "flex-start",
+        padding: isMobile ? "96px 20px 60px" : "80px 48px 80px",
+        overflow: isMobile ? "visible" : "hidden",
+        gap: isMobile ? 28 : 40,
         boxSizing: "border-box",
       }}
     >
       {/* LEFT: All text content */}
       <div style={{
-        maxWidth: 580,
-        flex: 1,
+        maxWidth: isMobile ? "100%" : 580,
+        flex: isMobile ? "none" : 1,
         minWidth: 0,
         // Flex column with defined gaps — no margin hacks
         display: "flex",
         flexDirection: "column",
-        gap: 20,
+        gap: isMobile ? 16 : 20,
       }}>
 
         {/* 1. Available badge — standalone status pill, shown first */}
@@ -143,11 +158,17 @@ function Hero() {
           {personalInfo.summary}
         </motion.p>
 
-        {/* 5. CTA Buttons — all 3 on one row, full original width */}
+        {/* 5. CTA Buttons — row on desktop/tablet (unchanged), stacked on mobile */}
         <motion.div
           variants={fadeUpVariants} initial="hidden" animate="visible"
           transition={{ duration: 0.6, delay: 0.3 }}
-          style={{ display:"flex", flexDirection:"row", gap:14, alignItems:"center" }}
+          style={{
+            display:"flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap:14,
+            alignItems: isMobile ? "stretch" : "center",
+            width: isMobile ? "100%" : "auto",
+          }}
         >
           <ActionButton
             href={"tel:" + personalInfo.phone}
@@ -155,6 +176,7 @@ function Hero() {
             borderColor="var(--accent2)"
             glowColor="rgba(0,207,255,0.2)"
             label="📞 Call Now"
+            fullWidth={isMobile}
           />
           <ActionButton
             href={"mailto:" + personalInfo.email}
@@ -163,17 +185,19 @@ function Hero() {
             borderColor="var(--accent3)"
             glowColor="rgba(255,96,96,0.2)"
             label={emailCopied ? "✓ Email Copied" : "✉️ Email Me"}
+            fullWidth={isMobile}
           />
           <button
             onClick={downloadResume}
             style={{
-              display:"inline-flex", alignItems:"center", gap:8,
+              display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
               padding:"13px 28px",
               borderRadius:4, fontFamily:"var(--font-body)", fontSize:13,
               fontWeight:700, letterSpacing:1, textTransform:"uppercase",
               cursor:"pointer", background:"var(--accent)", color:"#030712",
               border:"none", boxShadow:"0 0 28px rgba(59,255,160,0.3)",
               transition:"all 0.3s", whiteSpace:"nowrap",
+              width: isMobile ? "100%" : "auto",
             }}
             onMouseEnter={(e) => { e.currentTarget.style.boxShadow="0 0 44px rgba(59,255,160,0.5)"; e.currentTarget.style.transform="translateY(-2px)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.boxShadow="0 0 28px rgba(59,255,160,0.3)"; e.currentTarget.style.transform="translateY(0)"; }}
@@ -184,28 +208,41 @@ function Hero() {
 
       </div>
 
-      {/* RIGHT: 3D Globe */}
+      {/* RIGHT: 3D Globe — unchanged on desktop/tablet, shrunk + moved
+          below the text (not removed) on mobile so it never forces
+          horizontal overflow. */}
       <motion.div
         initial={{ opacity:0, scale:0.8 }} animate={{ opacity:1, scale:1 }}
         transition={{ duration:1, delay:0.5 }}
-        style={{ width:400, height:400, flexShrink:0 }}
+        style={{
+          width: isMobile ? 240 : 400,
+          height: isMobile ? 240 : 400,
+          flexShrink: 0,
+          alignSelf: isMobile ? "center" : "auto",
+          margin: isMobile ? "8px 0 0" : 0,
+        }}
       >
         <HeroCanvas />
       </motion.div>
 
-      {/* Scroll indicator at very bottom */}
-      <motion.div
-        initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.5 }}
-        style={{
-          position:"absolute", bottom:24, left:"50%", transform:"translateX(-50%)",
-          display:"flex", flexDirection:"column", alignItems:"center", gap:8,
-          fontFamily:"var(--font-mono)", fontSize:10, color:"var(--muted)",
-          letterSpacing:3, textTransform:"uppercase",
-        }}
-      >
-        <span>Scroll</span>
-        <div style={{ width:1, height:44, background:"linear-gradient(to bottom, var(--accent), transparent)", animation:"scrollPulse 2s ease-in-out infinite" }} />
-      </motion.div>
+      {/* Scroll indicator — desktop/tablet only. On mobile the section
+          height is no longer fixed to the viewport, so an absolutely
+          positioned "scroll" hint at bottom:24 would float in the middle
+          of the page instead of at the true bottom. */}
+      {!isMobile && (
+        <motion.div
+          initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ delay:1.5 }}
+          style={{
+            position:"absolute", bottom:24, left:"50%", transform:"translateX(-50%)",
+            display:"flex", flexDirection:"column", alignItems:"center", gap:8,
+            fontFamily:"var(--font-mono)", fontSize:10, color:"var(--muted)",
+            letterSpacing:3, textTransform:"uppercase",
+          }}
+        >
+          <span>Scroll</span>
+          <div style={{ width:1, height:44, background:"linear-gradient(to bottom, var(--accent), transparent)", animation:"scrollPulse 2s ease-in-out infinite" }} />
+        </motion.div>
+      )}
 
       {/* Resume download confirmation toast */}
       <AnimatePresence>
@@ -238,19 +275,21 @@ function Hero() {
   );
 }
 
-function ActionButton({ href, color, borderColor, glowColor, label, onClick }) {
+function ActionButton({ href, color, borderColor, glowColor, label, onClick, fullWidth }) {
   return (
     <a
       href={href}
       onClick={onClick}
       style={{
-        display:"inline-flex", alignItems:"center", gap:8,
+        display:"inline-flex", alignItems:"center", justifyContent:"center", gap:8,
         padding:"13px 28px",
         borderRadius:4, fontFamily:"var(--font-body)", fontSize:13,
         fontWeight:700, letterSpacing:1, textTransform:"uppercase",
         background:"transparent", color:color,
         border:"1.5px solid " + borderColor,
         transition:"all 0.3s", cursor:"pointer", whiteSpace:"nowrap",
+        width: fullWidth ? "100%" : "auto",
+        boxSizing: "border-box",
       }}
       onMouseEnter={(e) => { e.currentTarget.style.boxShadow="0 0 28px " + glowColor; e.currentTarget.style.transform="translateY(-2px)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.boxShadow="none"; e.currentTarget.style.transform="translateY(0)"; }}

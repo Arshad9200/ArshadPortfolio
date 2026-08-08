@@ -15,7 +15,7 @@
 //
 // Make sure: public/Arshad_Ali_Resume.pdf exists in your project.
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { personalInfo, socialLinks } from "../data/portfolioData";
@@ -363,13 +363,22 @@ function SecondaryLink({ Icon, label, href }) {
 }
 
 function Contact() {
+  // 640px = phones only — tablet/desktop keep the existing 48px padding.
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   return (
     <section
       id="contact"
       style={{
         position: "relative",
         zIndex: 1,
-        padding: "100px 48px",
+        padding: isMobile ? "60px 20px" : "100px 48px",
         textAlign: "center",
       }}
     >

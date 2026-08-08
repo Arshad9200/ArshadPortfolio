@@ -129,7 +129,20 @@ function PhotoCard({ isMobile }) {
       initial={{ opacity: 0, scale: 0.88, y: 24 }}
       animate={inView ? { opacity: 1, scale: 1, y: 0 } : {}}
       transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-      style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flexShrink: 0 }}
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 20, flexShrink: 0,
+        // On desktop/tablet this sits inside a CSS Grid column, which
+        // already gives it a definite width to wrap text against.
+        // On mobile the layout switches to a plain flex stack with no
+        // such constraint — without an explicit width here, any child
+        // with unwrappable content (like a long flex row) can silently
+        // blow this box wider than the screen. width:100% + maxWidth
+        // guarantees a real, definite width to wrap against on mobile,
+        // while staying exactly as before on desktop/tablet.
+        width: isMobile ? "100%" : "auto",
+        maxWidth: isMobile ? 320 : "none",
+        boxSizing: "border-box",
+      }}
     >
 
       {/* ── Photo frame ── */}
@@ -246,31 +259,43 @@ function PhotoCard({ isMobile }) {
         {/* Career snapshot — current role + most recent professional experience.
             Full detail for each still lives in the Experience section; this is
             just enough context so a visitor isn't left thinking GitHub is the
-            whole story. */}
+            whole story.
+            NOTE: width:"100%" + boxSizing:"border-box" here is load-bearing —
+            without an explicit width, this box (a child of a centered flex
+            column) shrink-wraps to fit its content. Combined with the flex
+            rows below not being allowed to wrap (see minWidth:0 note), that
+            silently made the box wider than the viewport on small screens,
+            which then got centered and clipped off both edges. */}
         <div style={{
           display: "flex", flexDirection: "column", gap: 9,
           marginTop: 12, textAlign: "left",
           padding: "12px 14px", borderRadius: 8,
           border: "1px solid var(--border)",
           background: "rgba(13,17,23,0.6)",
+          width: "100%",
+          maxWidth: 340,
+          boxSizing: "border-box",
         }}>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
             <span style={{
               width: 6, height: 6, borderRadius: "50%", flexShrink: 0, marginTop: 5,
               background: "var(--accent)", boxShadow: "0 0 8px rgba(59,255,160,0.6)",
             }} />
-            <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)", lineHeight: 1.6 }}>
+            {/* minWidth:0 is required for a flex item to be allowed to wrap
+                instead of forcing the row to overflow — without it, flex
+                items default to min-width:auto (won't shrink below content). */}
+            <p style={{ flex: 1, minWidth: 0, overflowWrap: "break-word", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)", lineHeight: 1.6, margin: 0 }}>
               <span style={{ color: "var(--accent)", fontWeight: 700 }}>Currently</span>
               {" — "}{currentRole.title} ({currentRole.program}) @ {currentRole.company}
             </p>
           </div>
           {experience[0] && (
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
               <span style={{
                 width: 6, height: 6, borderRadius: "50%", flexShrink: 0, marginTop: 5,
                 background: "var(--muted)",
               }} />
-              <p style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)", lineHeight: 1.6 }}>
+              <p style={{ flex: 1, minWidth: 0, overflowWrap: "break-word", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)", lineHeight: 1.6, margin: 0 }}>
                 <span style={{ color: "var(--accent2)", fontWeight: 700 }}>Previously</span>
                 {" — "}{experience[0].title} @ {experience[0].company.split(" · ")[0]} ({experience[0].date})
               </p>
