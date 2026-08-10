@@ -33,7 +33,14 @@ import AskAI             from "./components/AskAI";   // ← NEW import — floa
 
 function App() {
   return (
-    <div style={{ position: "relative" }}>
+    // overflowX:hidden here is a deliberate safety net: with this many
+    // custom animations/transforms across the site (framer-motion
+    // scale/slide-ins, 3D tilts, canvas globes), a single nested element
+    // being a few px too wide on some device can make the whole page
+    // horizontally scrollable/"bouncy". This guarantees the document
+    // itself can never scroll sideways, regardless of the cause,
+    // without changing how anything actually looks.
+    <div style={{ position: "relative", overflowX: "hidden", width: "100%", maxWidth: "100vw" }}>
 
       {/* Fixed elements */}
       <Cursor />

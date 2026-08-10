@@ -209,10 +209,15 @@ function Skills() {
 
   // 640px = phones only — tablet/desktop keep the exact current 48px
   // padding and 280px grid minimum unchanged.
-  const [isMobile, setIsMobile] = useState(false);
+  //
+  // Lazy-initialized from window.innerWidth so the first render already
+  // has the correct grid/padding — avoids a flash of the wide desktop
+  // grid on phones before snapping to the mobile layout.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);

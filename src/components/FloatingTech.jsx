@@ -14,10 +14,15 @@ function FloatingTech() {
   // Purely decorative — on a phone it just crowds the content and eats
   // width with nothing functional gained, so it's hidden below 640px.
   // Tablet (768px+) and desktop are completely unaffected.
-  const [isMobile, setIsMobile] = useState(false);
+  //
+  // Lazy-initialized from window.innerWidth (not `false`) so it never
+  // flashes visible-then-hidden on mobile — see Hero.jsx for the full
+  // explanation of why that flash mattered.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);

@@ -31,12 +31,12 @@ export const stats = [
 // `level` = proficiency out of 5, shown as a dot scale on the card.
 // `group` = which filter tab this card appears under on the Skills section.
 export const skillGroups = [
-  { id: "all",     label: "All"      },
-  { id: "backend", label: "Backend"  },
-  { id: "frontend",label: "Frontend" },
-  { id: "data",    label: "Data"     },
-  { id: "tools",   label: "Tools"    },
-  { id: "ai",      label: "AI"       },
+  { id: "all", label: "All" },
+  { id: "backend", label: "Backend" },
+  { id: "frontend", label: "Frontend" },
+  { id: "data", label: "Data" },
+  { id: "tools", label: "Tools" },
+  { id: "ai", label: "AI" },
 ];
 
 export const skills = [
@@ -114,18 +114,13 @@ export const skills = [
     ],
   },
   {
-  icon: "🐍",
-  category: "Python Libraries",
-  name: "Data Processing & Visualization",
-  level: 3,
-  group: "data",
-  tags: [
-    "NumPy",
-    "Pandas",
-    "Matplotlib",
-    "Jupyter Notebook",
-  ],
-},
+    icon: "🐍",
+    category: "Python Libraries",
+    name: "Data Processing & Visualization",
+    level: 3,
+    group: "data",
+    tags: ["NumPy", "Pandas", "Matplotlib", "Jupyter Notebook"],
+  },
   {
     icon: "🛠️",
     category: "Tools & Workflow",
@@ -171,19 +166,24 @@ export const experience = [
   },
 ];
 
-
-
 // Short tech chips rendered as icon pills on each project card
 // (separate from the longer `stack` string used elsewhere).
 const TECH_ICON_MAP = {
-  Python: "🐍", Sanic: "⚡", PostgreSQL: "🗄️", React: "⚛️", JavaScript: "🟨",
+  Python: "🐍",
+  Sanic: "⚡",
+  PostgreSQL: "🗄️",
+  React: "⚛️",
+  JavaScript: "🟨",
 };
 
 function toTechChips(stackString) {
-  return stackString.split("·").map((s) => s.trim()).map((name) => ({
-    name,
-    icon: TECH_ICON_MAP[name] || "▹",
-  }));
+  return stackString
+    .split("·")
+    .map((s) => s.trim())
+    .map((name) => ({
+      name,
+      icon: TECH_ICON_MAP[name] || "▹",
+    }));
 }
 
 export const projects = [
@@ -220,7 +220,9 @@ export const projects = [
 ];
 
 // Attach the icon-chip breakdown to every project without hand-typing it twice.
-projects.forEach((p) => { p.techChips = toTechChips(p.stack); });
+projects.forEach((p) => {
+  p.techChips = toTechChips(p.stack);
+});
 
 export const education = {
   degree: "Bachelor of Technology in Computer Science",
@@ -239,13 +241,10 @@ export const floatingTech = [
   "Debugging",
 ];
 
-
-
-
 export const currentRole = {
-  date: "June 2026 – Present",              
+  date: "June 2026 – Present",
   title: "Technical Support Executive",
-  program: "NAPS",                         
+  program: "NAPS",
   company: "Bluspring Enterprises Limited",
   companyShort: "BE",
   logo: "/images/logos/bluspring.png",
@@ -258,7 +257,6 @@ export const currentRole = {
     "Continuously upskilling in Python backend development, Machine Learning, LangChain, and AI agent workflows while preparing for AI/ML engineering opportunities.",
 };
 
-
 // untouched.
 function withProtocol(url) {
   if (!url) return url;
@@ -270,12 +268,12 @@ function withProtocol(url) {
 // ============================================================
 const rawSocialLinks = {
   github: "https://github.com/Arshad9200",
-  linkedin: "www.linkedin.com/in/arshadalideveloper",
+  linkedin: "https://www.linkedin.com/in/arshadalideveloper",
   whatsapp: "https://wa.me/917479914419",
   wellfound: "https://wellfound.com/u/arshad-ali-103",
   email: `mailto:${personalInfo.email}`,
 };
 
 export const socialLinks = Object.fromEntries(
-  Object.entries(rawSocialLinks).map(([key, url]) => [key, withProtocol(url)])
+  Object.entries(rawSocialLinks).map(([key, url]) => [key, withProtocol(url)]),
 );

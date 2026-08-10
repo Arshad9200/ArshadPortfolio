@@ -13,11 +13,16 @@ import { projects } from "../data/portfolioData";
 import { SectionTitle } from "./Skills";
 
 // 640px = phones only — tablet/desktop keep the exact current layout.
+//
+// Lazy-initialized from window.innerWidth so the first render already
+// uses the correct grid/padding — avoids a flash of the wide desktop
+// grid (340px minmax) before it snaps to the mobile layout.
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);

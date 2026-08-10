@@ -364,10 +364,15 @@ function SecondaryLink({ Icon, label, href }) {
 
 function Contact() {
   // 640px = phones only — tablet/desktop keep the existing 48px padding.
-  const [isMobile, setIsMobile] = useState(false);
+  //
+  // Lazy-initialized from window.innerWidth so the first render already
+  // uses the correct padding, avoiding a flash of the wide desktop
+  // layout before it snaps to mobile.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);

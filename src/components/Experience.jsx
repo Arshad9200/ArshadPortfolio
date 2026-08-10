@@ -15,8 +15,17 @@ import { SectionTitle } from "./Skills"; // Re-using component from Skills
 
 // 640px = phones only — tablet/desktop are unaffected by every isMobile
 // check in this file.
+//
+// Lazy-initialized from window.innerWidth (not `false`) so the first
+// render already has the correct value — defaulting to false and
+// correcting via useEffect caused a flash of the desktop layout
+// (48px padding, wide 340px card grid, un-collapsed bullet lists) on
+// phones for one frame before snapping to the mobile layout, which is
+// what produced the "bouncy" / extra horizontal space symptom.
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640,
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
     check();
@@ -48,8 +57,8 @@ function StatCard({ number, label, suffix }) {
           <CountUp
             start={0}
             end={number}
-            duration={2}       // 2 seconds to count up
-            suffix={suffix}    // Add "+" or "%" after number
+            duration={2} // 2 seconds to count up
+            suffix={suffix} // Add "+" or "%" after number
           />
         ) : (
           "0" // Before in view, show 0
@@ -77,17 +86,32 @@ function StatCard({ number, label, suffix }) {
 function CompanyChip({ short, logo, accent }) {
   if (!short && !logo) return null;
   return (
-    <span style={{
-      display: "inline-flex", alignItems: "center", justifyContent: "center",
-      width: 26, height: 26, borderRadius: 6,
-      border: `1px solid ${accent}`,
-      background: "rgba(255,255,255,0.03)",
-      overflow: "hidden",
-      fontFamily: "var(--font-mono)", fontSize: 10, fontWeight: 700,
-      color: accent, marginRight: 10, flexShrink: 0,
-    }}>
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 26,
+        height: 26,
+        borderRadius: 6,
+        border: `1px solid ${accent}`,
+        background: "rgba(255,255,255,0.03)",
+        overflow: "hidden",
+        fontFamily: "var(--font-mono)",
+        fontSize: 10,
+        fontWeight: 700,
+        color: accent,
+        marginRight: 10,
+        flexShrink: 0,
+      }}
+    >
       {logo ? (
-        <img src={logo} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+        <img
+          src={logo}
+          alt=""
+          loading="lazy"
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
+        />
       ) : (
         short
       )}
@@ -97,7 +121,15 @@ function CompanyChip({ short, logo, accent }) {
 
 // ── EXPERIENCE ITEM ──
 // One job entry in the timeline
-function ExperienceItem({ date, title, company, companyShort, logo, points, index }) {
+function ExperienceItem({
+  date,
+  title,
+  company,
+  companyShort,
+  logo,
+  points,
+  index,
+}) {
   const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
   const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
@@ -151,7 +183,13 @@ function ExperienceItem({ date, title, company, companyShort, logo, points, inde
       </p>
 
       {/* Job Title */}
-      <h3 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 800, marginBottom: 4 }}>
+      <h3
+        style={{
+          fontSize: isMobile ? 22 : 28,
+          fontWeight: 800,
+          marginBottom: 4,
+        }}
+      >
         {title}
       </h3>
 
@@ -164,10 +202,17 @@ function ExperienceItem({ date, title, company, companyShort, logo, points, inde
           color: "var(--accent2)",
           fontWeight: 600,
           marginBottom: 20,
+          minWidth: 0,
         }}
       >
-        <CompanyChip short={companyShort} accent="var(--accent2)" />
-        {company}
+        <CompanyChip short={companyShort} logo={logo} accent="var(--accent2)" />
+        {/* flex:1 + minWidth:0 lets this wrap instead of forcing the row
+            to overflow — a long company name here (e.g. "Atom Build ·
+            Anant Atom Consultancy Private Limited") was pushing this
+            entire row, including the chip, wider than the phone screen. */}
+        <span style={{ flex: 1, minWidth: 0, overflowWrap: "break-word" }}>
+          {company}
+        </span>
       </p>
 
       {/* Bullet points */}
@@ -186,7 +231,9 @@ function ExperienceItem({ date, title, company, companyShort, logo, points, inde
             }}
           >
             {/* Arrow bullet */}
-            <span style={{ color: "var(--accent)", flexShrink: 0, marginTop: 2 }}>
+            <span
+              style={{ color: "var(--accent)", flexShrink: 0, marginTop: 2 }}
+            >
               →
             </span>
             {point}
@@ -200,13 +247,21 @@ function ExperienceItem({ date, title, company, companyShort, logo, points, inde
         <button
           onClick={() => setExpanded((v) => !v)}
           style={{
-            fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: 1,
-            textTransform: "uppercase", color: "var(--accent)",
-            background: "none", border: "none", padding: "6px 0 0",
-            cursor: "pointer", textAlign: "left",
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            letterSpacing: 1,
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            background: "none",
+            border: "none",
+            padding: "6px 0 0",
+            cursor: "pointer",
+            textAlign: "left",
           }}
         >
-          {expanded ? "− Show less" : `+ Read more (${points.length - COLLAPSE_AT} more)`}
+          {expanded
+            ? "− Show less"
+            : `+ Read more (${points.length - COLLAPSE_AT} more)`}
         </button>
       )}
     </motion.div>
@@ -217,7 +272,16 @@ function ExperienceItem({ date, title, company, companyShort, logo, points, inde
 // Deliberately smaller and muted compared to ExperienceItem —
 // keeps this section honest about the present without competing
 // visually with the engineering work above it.
-function CurrentRoleCard({ date, title, program, company, companyShort, points, parallelNote }) {
+function CurrentRoleCard({
+  date,
+  title,
+  program,
+  company,
+  companyShort,
+  points,
+  parallelNote,
+  logo,
+}) {
   const { ref, inView } = useInView({ threshold: 0.1, triggerOnce: true });
   const isMobile = useIsMobile();
 
@@ -249,18 +313,48 @@ function CurrentRoleCard({ date, title, program, company, companyShort, points, 
         }}
       />
 
-      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 8,
+          marginBottom: 4,
+        }}
+      >
         <h4 style={{ fontSize: 16, fontWeight: 700, color: "var(--text)" }}>
-          {title} <span style={{ color: "var(--muted)", fontWeight: 400 }}>· {program}</span>
+          {title}{" "}
+          <span style={{ color: "var(--muted)", fontWeight: 400 }}>
+            · {program}
+          </span>
         </h4>
-        <p style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--muted)", letterSpacing: 1 }}>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "var(--muted)",
+            letterSpacing: 1,
+          }}
+        >
           {date}
         </p>
       </div>
 
-      <p style={{ display: "flex", alignItems: "center", fontSize: 13, color: "var(--muted)", marginBottom: 14 }}>
-        <CompanyChip short={companyShort} accent="var(--muted)" />
-        {company}
+      <p
+        style={{
+          display: "flex",
+          alignItems: "center",
+          fontSize: 13,
+          color: "var(--muted)",
+          marginBottom: 14,
+          minWidth: 0,
+        }}
+      >
+        <CompanyChip short={companyShort} logo={logo} accent="var(--muted)" />
+        <span style={{ flex: 1, minWidth: 0, overflowWrap: "break-word" }}>
+          {company}
+        </span>
       </p>
 
       <ul style={{ marginBottom: parallelNote ? 14 : 0 }}>
@@ -277,7 +371,14 @@ function CurrentRoleCard({ date, title, program, company, companyShort, points, 
               lineHeight: 1.6,
             }}
           >
-            <span style={{ color: "var(--muted)", flexShrink: 0, marginTop: 2, opacity: 0.6 }}>
+            <span
+              style={{
+                color: "var(--muted)",
+                flexShrink: 0,
+                marginTop: 2,
+                opacity: 0.6,
+              }}
+            >
               →
             </span>
             {point}
@@ -286,13 +387,15 @@ function CurrentRoleCard({ date, title, program, company, companyShort, points, 
       </ul>
 
       {parallelNote && (
-        <p style={{
-          fontSize: 12,
-          color: "rgba(168,85,247,0.85)",
-          borderTop: "1px solid var(--border)",
-          paddingTop: 12,
-          lineHeight: 1.6,
-        }}>
+        <p
+          style={{
+            fontSize: 12,
+            color: "rgba(168,85,247,0.85)",
+            borderTop: "1px solid var(--border)",
+            paddingTop: 12,
+            lineHeight: 1.6,
+          }}
+        >
           {parallelNote}
         </p>
       )}
@@ -366,17 +469,23 @@ function Experience() {
             top: 0,
             width: 1,
             height: fillHeight,
-            background: "linear-gradient(to bottom, var(--accent), var(--accent2))",
+            background:
+              "linear-gradient(to bottom, var(--accent), var(--accent2))",
             boxShadow: "0 0 8px rgba(59,255,160,0.5)",
           }}
         />
 
         {/* Subsection label — signals "this is the featured work" */}
-        <p style={{
-          fontFamily: "var(--font-mono)", fontSize: 10,
-          letterSpacing: 3, textTransform: "uppercase",
-          color: "var(--accent)", marginBottom: 24,
-        }}>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            marginBottom: 24,
+          }}
+        >
           <span style={{ opacity: 0.5 }}>//</span> Engineering
         </p>
 
@@ -386,11 +495,17 @@ function Experience() {
         ))}
 
         {/* Subsection label for current role — visually quieter */}
-        <p style={{
-          fontFamily: "var(--font-mono)", fontSize: 10,
-          letterSpacing: 3, textTransform: "uppercase",
-          color: "var(--muted)", marginBottom: 20, marginTop: 16,
-        }}>
+        <p
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 10,
+            letterSpacing: 3,
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            marginBottom: 20,
+            marginTop: 16,
+          }}
+        >
           <span style={{ opacity: 0.5 }}>//</span> Currently
         </p>
 

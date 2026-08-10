@@ -32,10 +32,19 @@ function Hero() {
 
   // 640px = phones only. Tablets (768px+) and desktop keep the exact
   // existing layout — nothing below changes anything at those widths.
-  const [isMobile, setIsMobile] = useState(false);
+  //
+  // IMPORTANT: initialized lazily from window.innerWidth (not `false`)
+  // so the very first render already has the correct value. Defaulting
+  // to false and correcting via useEffect meant the page briefly
+  // rendered the full desktop layout (400px globe, side-by-side row)
+  // on phones, then snapped to mobile a frame later — that flash of an
+  // oversized desktop layout was the actual cause of the "bouncy" /
+  // extra-right-space symptom on real devices.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth <= 640
+  );
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 640);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
